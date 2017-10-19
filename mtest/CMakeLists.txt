@@ -185,6 +185,7 @@ subdirs (
         libmscore/midi                 # one disabled
 #        libmscore/midimapping
         libmscore/note
+        libmscore/test
         libmscore/repeat
         libmscore/rhythmicGrouping
         libmscore/selectionfilter
