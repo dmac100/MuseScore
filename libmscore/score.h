@@ -635,6 +635,7 @@ class Score : public QObject, ScoreElement {
 
       Segment* setNoteRest(Segment*, int track, NoteVal nval, Fraction, Direction stemDirection = Direction::AUTO);
       void changeCRlen(ChordRest* cr, const TDuration&);
+      void changeCRlenLocal(ChordRest* cr, const TDuration&);
       void changeCRlen(ChordRest* cr, const Fraction&, bool fillWithRest=true);
       void createCRSequence(Fraction f, ChordRest* cr, int tick);
 

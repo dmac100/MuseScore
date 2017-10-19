@@ -1087,6 +1087,47 @@ void Score::changeCRlen(ChordRest* cr, const TDuration& d)
       changeCRlen(cr, dstF);
       }
 
+void Score::changeCRlenLocal(ChordRest* cr, const TDuration& d) {
+      Fraction fraction  = d.fraction();
+      int len            = fraction.ticks();
+      Segment* seg       = cr->segment();
+      int tick           = seg->tick() + cr->duration().ticks();
+      Measure* m         = seg->measure();
+
+      Fraction newMeasureLen = m->len() + fraction - cr->duration();
+
+      if ((MScore::division * 4) % newMeasureLen.denominator()) {
+            return;
+      }
+
+      if (!cr->isChord()) {
+            return;
+      }
+
+      Chord* c = toChord(cr);
+      if (c->tremolo()) {
+            Tremolo* tremolo = c->tremolo();
+            if (tremolo->twoNotes()) {
+                  undoRemoveElement(tremolo);
+            }
+      }
+      foreach (Note* n, c->notes()) {
+            if (n->tieFor()) {
+                  undoRemoveElement(n->tieFor());
+            }
+      }
+
+      undoInsertTime(tick, len);
+      undo(new InsertTime(this, tick, len));
+
+      for (Segment* s = seg->next(); s; s = s->next()) {
+            s->undoChangeProperty(P_ID::TICK, s->rtick() + len - cr->actualTicks());
+      }
+      undo(new ChangeMeasureLen(m, newMeasureLen));
+
+      undoChangeChordRestLen(cr, fraction);
+}
+
 void Score::changeCRlen(ChordRest* cr, const Fraction& dstF, bool fillWithRest)
       {
       Fraction srcF(cr->duration());
@@ -1157,6 +1198,7 @@ void Score::changeCRlen(ChordRest* cr, const Fraction& dstF, bool fillWithRest)
 
             if (cr->isRest()) {
                   Fraction timeStretch = cr1->staff()->timeStretch(cr1->tick());
+
                   Rest* r = toRest(cr);
                   if (first) {
                         std::vector<TDuration> dList = toDurationList(f2, true);
@@ -2270,7 +2312,7 @@ void Score::cmdIncDecDuration(int nSteps, bool stepDotted)
             undoChangeChordRestLen(cr, d);
             }
       else
-            changeCRlen(cr, d);
+            changeCRlenLocal(cr, d.fraction());
       _is.setDuration(d);
       nextInputPos(cr, false);
       }

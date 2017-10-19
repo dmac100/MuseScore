@@ -2658,7 +2658,7 @@ void Score::padToggle(Pad n)
             undoChangeChordRestLen(cr, _is.duration());
             }
       else
-            changeCRlen(cr, _is.duration());
+            changeCRlenLocal(cr, _is.duration());
       }
 
 //---------------------------------------------------------
