@@ -1093,8 +1093,27 @@ void Score::changeCRlenLocal(ChordRest* cr, const TDuration& d) {
       Segment* seg       = cr->segment();
       int tick           = seg->tick() + cr->duration().ticks();
       Measure* m         = seg->measure();
+      int offsetTicks    = len - cr->actualTicks();
 
-      Fraction newMeasureLen = m->len() + fraction - cr->duration();
+      int maxTicks = 0;
+      for(int track = 0; track < nstaves() * VOICES; track++) {
+            for(Segment* s = m->last(); s; s = s->prev()) {
+                  if(s->isChordRestType()) {
+                        ChordRest* c = static_cast<ChordRest*>(s->element(track));
+                        if(c) {
+                              if(track == cr->track()) {
+                                    maxTicks = qMax(maxTicks, c->segment()->rtick() + c->actualTicks() + offsetTicks);
+                              } else {
+                                    maxTicks = qMax(maxTicks, c->segment()->rtick() + c->actualTicks());
+                              }
+                              continue;
+                        }
+                  }
+            }
+      }
+
+      int originalMeasureTicks = m->ticks();
+      Fraction newMeasureLen = Fraction::fromTicks(maxTicks);
 
       if ((MScore::division * 4) % newMeasureLen.denominator()) {
             return;
@@ -1117,15 +1136,30 @@ void Score::changeCRlenLocal(ChordRest* cr, const TDuration& d) {
             }
       }
 
-      undoInsertTime(tick, len);
-      undo(new InsertTime(this, tick, len));
-
-      for (Segment* s = seg->next(); s; s = s->next()) {
-            s->undoChangeProperty(P_ID::TICK, s->rtick() + len - cr->actualTicks());
-      }
-      undo(new ChangeMeasureLen(m, newMeasureLen));
+      undo(new ChangeMeasureLen(m, Fraction::fromTicks(maxTicks)));
 
       undoChangeChordRestLen(cr, fraction);
+
+      for(Segment* s = (offsetTicks > 0) ? m->last() : seg->next(); s && s != seg; s = (offsetTicks > 0) ? s->prev() : s->next()) {
+            if(s->isChordRestType()) {
+                  if(s->element(cr->track())) {
+                        ChordRest* c = static_cast<ChordRest*>(s->element(cr->track()));
+
+                        ChordRest* newcr = toChordRest(c->clone());
+
+                        undoRemoveElement(c);
+                        undoAddCR(newcr, newcr->measure(), s->tick() + offsetTicks);
+                  }
+            }
+      }
+
+      if(maxTicks > originalMeasureTicks) {
+            for(int track = 0; track < nstaves() * VOICES; track++) {
+                  if(m->hasVoice(track) && track != cr->track()) {
+                        //setRest(originalMeasureTicks, track, maxTicks - originalMeasureTicks, false, 0);
+                  }
+            }
+      }
 }
 
 void Score::changeCRlen(ChordRest* cr, const Fraction& dstF, bool fillWithRest)
