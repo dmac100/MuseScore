@@ -2624,6 +2624,8 @@ void Score::insertMeasure(ElementType type, MeasureBase* measure, bool createEmp
 
       undoInsertTime(tick, ticks);
 
+      fixTicks();
+
       if (om && !createEmptyMeasures) {
             //
             // fill measure with rest
