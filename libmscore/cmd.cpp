@@ -1156,7 +1156,7 @@ void Score::changeCRlenLocal(ChordRest* cr, const TDuration& d) {
       if(maxTicks > originalMeasureTicks) {
             for(int track = 0; track < nstaves() * VOICES; track++) {
                   if(m->hasVoice(track) && track != cr->track()) {
-                        //setRest(originalMeasureTicks, track, maxTicks - originalMeasureTicks, false, 0);
+                        setRest(m->tick() + originalMeasureTicks, track, Fraction::fromTicks(maxTicks - originalMeasureTicks), false, 0);
                   }
             }
       }
