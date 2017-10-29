@@ -2742,7 +2742,10 @@ void Score::localTimeDelete()
             int endTick  = startSegment->tick() + cr->duration().ticks();
             endSegment   = cr->measure()->findSegment(CR_TYPE, endTick);
             if (endSegment == 0) {
-                  qDebug("no segment at %d", endTick);
+                  if(startSegment->rtick() == 0)
+                        deleteMeasures(startSegment->measure(), startSegment->measure());
+                  else
+                        timeDelete(startSegment->measure(), startSegment, Fraction::fromTicks(startSegment->ticks()));
                   return;
                   }
             }
