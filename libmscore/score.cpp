@@ -2593,21 +2593,20 @@ void Score::padToggle(Pad n)
                   break;
             }
       if (n >= Pad::NOTE00 && n <= Pad::NOTE128) {
-            _is.setDots(0);
+            switch (oldDots) {
+                  case 1:
+                        padToggle(Pad::DOT);
+                        break;
+                  case 2:
+                        padToggle(Pad::DOTDOT);
+                        break;
+                  }
             //
             // if in "note enter" mode, reset
             // rest flag
             //
             if (noteEntryMode()) {
                   if (usingNoteEntryMethod(NoteEntryMethod::RHYTHM)) {
-                        switch (oldDots) {
-                              case 1:
-                                    padToggle(Pad::DOT);
-                                    break;
-                              case 2:
-                                    padToggle(Pad::DOTDOT);
-                                    break;
-                              }
                         NoteVal nval;
                         if (_is.rest()) {
                               // Enter a rest
